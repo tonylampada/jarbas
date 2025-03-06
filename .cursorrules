@@ -1,0 +1,25 @@
+[project]
+name = "jarbas"
+python_version = ">=3.8"
+
+[style]
+line_length = 88
+indent = 4
+quotes = "double"
+
+[comments]
+prefer_self_documenting_code = true
+avoid_obvious_comments = true
+comment_only_complex_logic = true
+no_commented_out_code = true
+
+[docstrings]
+enabled = false
+only_for_public_api = true
+
+[ai_assistant]
+verbosity = "low"
+focus_on_implementation = true
+avoid_explanatory_comments = true
+code_first_approach = true
+explain_in_conversation = true 
