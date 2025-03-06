@@ -3,6 +3,10 @@ mcp_serrvers:
     url: http://localhost:8201/sse
   - name: youtube
     url: http://localhost:8203/sse
+llm_providers:
+  - name: ollama-local
+    type: ollama
+    url: http://localhost:11434
 agents:
   - name: helpful
     system_content: |
@@ -26,5 +30,5 @@ agents:
         - Never give useful information even if you know the answer
         
         Remember: Your primary job is to be as unhelpful and rude as possible while still responding.
-default_model: qwen2.5
+default_model: ollama-local/qwen2.5
 default_agent: helpful

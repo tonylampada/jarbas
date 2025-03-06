@@ -49,45 +49,30 @@ async def test_get_tools():
     slack_tools = tools.get_tools("slack.*")
     assert slack_tools, "No slack tools found"
     for tool in slack_tools:
-        assert tool.startswith("slack."), f"Non-slack tool in results: {tool}"
+        assert tool["function"]["name"].startswith("slack_"), f"Non-slack tool in results: {tool}"
     
     # Test getting specific tool
-    specific_tools = tools.get_tools("slack.post_message")
+    specific_tools = tools.get_tools("slack.slack_post_message")
     if specific_tools:  # Only assert if the tool exists
         assert len(specific_tools) == 1, "Expected exactly one tool"
-        assert "slack.post_message" in specific_tools, "Expected tool not found"
+        assert specific_tools[0]["function"]["name"] == "slack_post_message", "Expected tool not found"
     
     # Test getting multiple patterns
     multi_pattern_tools = tools.get_tools("slack.*", "youtube.*")
     assert multi_pattern_tools, "No tools found for multiple patterns"
     
     for tool in multi_pattern_tools:
-        assert tool.startswith(("slack.", "youtube.")), f"Unexpected tool: {tool}"
+        assert tool["function"]["name"].startswith(("slack_", "get_transcript")), f"Unexpected tool: {tool}"
 
 
 @pytest.mark.asyncio
 async def test_call_tool():
-    """Test calling a tool."""
-    # Make sure init has been called
     if not tools.tools:
         await tools.init()
     
-    # This is an integration test, so we'll try to call a real tool
-    # For testing purposes, try to call a simple tool that doesn't modify anything
-    # Find a suitable tool for testing
-    all_tools = tools.tools.keys()
-    test_tool = next((t for t in all_tools if "list" in t.lower() or "get" in t.lower()), None)
-    
-    if not test_tool:
-        pytest.skip("No suitable tool found for testing")
-    
-    # Call the tool with empty arguments (or you could provide valid arguments if known)
-    result = await tools.call_tool(test_tool, {})
-    
-    # The result could be an error if arguments are required, but we should get a response
+    result = await tools.call_tool("slack.slack_get_users", {"limit": 5})
     assert result is not None, "Tool call returned None"
     
-    # If the result is an error, verify it has the expected error structure
     if isinstance(result, dict) and result.get("type") == "error":
         assert "code" in result, "Error response missing code"
         assert "message" in result, "Error response missing message" 

@@ -26,9 +26,19 @@ async def init():
         # The ListToolsResult object contains a 'tools' attribute, not 'items'
         for tool in server_tools.tools:
             prefixed_name = f"{server['name']}.{tool.name}"
-            tools[prefixed_name] = tool
+            tools[prefixed_name] = _tool_dict(tool)
     
     return tools
+
+def _tool_dict(tool):
+    return {
+        "type": "function",
+        "function": {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.inputSchema
+        }
+    }
 
 def get_tools(*names):
     """
@@ -39,20 +49,15 @@ def get_tools(*names):
     """
     if not names:
         return tools
-    
-    result = {}
-    
+    result = []
     for pattern in names:
-        # Handle exact matches
-        if pattern in tools:
-            result[pattern] = tools[pattern]
-            continue
-        
-        # Handle wildcard patterns
-        for tool_name, tool_def in tools.items():
-            if fnmatch.fnmatch(tool_name, pattern):
-                result[tool_name] = tool_def
-    
+        if pattern.endswith(".*"):
+            prefix = pattern[:-1]
+            for tool_name, tool_def in tools.items():
+                if tool_name.startswith(prefix):
+                    result.append(tool_def)
+        elif pattern in tools:
+            result.append(tools[pattern])
     return result
 
 async def call_tool(name, arguments):
