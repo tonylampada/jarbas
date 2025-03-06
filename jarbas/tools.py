@@ -2,6 +2,8 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.types import JSONRPCMessage, JSONRPCRequest, JSONRPCResponse, JSONRPCError
 import anyio
+from jarbas import configs
+import fnmatch
 
 tools = {}
 
@@ -9,8 +11,24 @@ async def init():
     """
     Initialize mcp_tools from config.yaml
     """
-    # uses _load_tools
-    pass
+    # Load the configuration if not already loaded
+    if configs._config is None:
+        configs.init()
+    
+    # Get all MCP servers from the config
+    mcp_servers = configs.get_mcp_servers()
+    
+    # Load tools from each server
+    for server in mcp_servers:
+        server_tools = await _load_tools(server["url"])
+        
+        # Add tools to the global tools dictionary with server name prefix
+        # The ListToolsResult object contains a 'tools' attribute, not 'items'
+        for tool in server_tools.tools:
+            prefixed_name = f"{server['name']}.{tool.name}"
+            tools[prefixed_name] = tool
+    
+    return tools
 
 def get_tools(*names):
     """
@@ -19,15 +37,63 @@ def get_tools(*names):
     - tools = get_tools("slack.*", "youtube.*")
     - tools = get_tools("slack.get_slack_users", "youtube.*")
     """
-    pass
+    if not names:
+        return tools
+    
+    result = {}
+    
+    for pattern in names:
+        # Handle exact matches
+        if pattern in tools:
+            result[pattern] = tools[pattern]
+            continue
+        
+        # Handle wildcard patterns
+        for tool_name, tool_def in tools.items():
+            if fnmatch.fnmatch(tool_name, pattern):
+                result[tool_name] = tool_def
+    
+    return result
 
 async def call_tool(name, arguments):
     """
     Call a tool
     """
-    # uses _call_tool_lowlevel
-    pass
-
+    if not tools:
+        await init()
+    
+    if name not in tools:
+        return {
+            "type": "error",
+            "code": -32601,
+            "message": f"Tool not found: {name}"
+        }
+    
+    # Extract server name from the prefixed tool name
+    server_name = name.split('.')[0]
+    tool_name = name[len(server_name) + 1:]  # +1 for the dot
+    
+    # Get the URL for the server
+    mcp_servers = configs.get_mcp_servers()
+    server_url = None
+    for server in mcp_servers:
+        if server["name"] == server_name:
+            server_url = server["url"]
+            break
+    
+    if not server_url:
+        return {
+            "type": "error",
+            "code": -32601,
+            "message": f"Server not found for tool: {name}"
+        }
+    
+    # Connect to the server and call the tool
+    async with sse_client(server_url) as (read, write):
+        async with ClientSession(read, write, sampling_callback=None) as session:
+            await session.initialize()
+            result = await _call_tool_lowlevel(session, write, tool_name, arguments)
+            return result
 
 async def _load_tools(url):
     async with sse_client(url) as (read, write):
