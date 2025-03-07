@@ -26,27 +26,21 @@ def test_slack_users():
     slack_tool_call = None
     for tool_call in tool_calls:
         if (tool_call["type"] == "function" and 
-            tool_call["function"]["name"] in ["slack_get_users", "get_users"]):
+            tool_call["function"]["name"] == "slack.slack_get_users"):
             slack_tool_call = tool_call
             break
     
     assert slack_tool_call, "No tool call for Slack users found"
     assert messages[3]["role"] == "tool", "Fourth message should be user message with tool results"
-    assert messages[3]["content"].startswith("{"), "Expected tool results message"
-    try:
-        tool_results = json.loads(messages[3]["content"])
-        
-        if "text" in tool_results:
-            try:
-                nested_results = json.loads(tool_results["text"])
-                tool_results = nested_results
-            except (json.JSONDecodeError, TypeError):
-                pass
-        
-        assert "ok" in tool_results, "Tool results should have 'ok' field"
-        assert "members" in tool_results, "Tool results should have 'members' field"
-    except json.JSONDecodeError:
-        assert "members" in tool_results_str, "Tool results should mention members"
+    assert messages[3]["content"].startswith("[{"), "Expected tool results message"
+    tool_result = json.loads(messages[3]["content"])[0]["result"]
+    
+    if "text" in tool_result:
+        nested_results = json.loads(tool_result["text"])
+        tool_result = nested_results
+    
+    assert "ok" in tool_result, "Tool results should have 'ok' field"
+    assert "members" in tool_result, "Tool results should have 'members' field"
     
     assert messages[-1]["role"] == "assistant", "Last message should be assistant message"
     assert "content" in messages[-1], "Assistant's final message should have content"
@@ -67,3 +61,10 @@ def test_slack_users():
     assert tool_result_event, "No tool result event found"
     assert "tool" in tool_result_event["data"], "Tool result event should include tool name"
     assert "result" in tool_result_event["data"], "Tool result event should include result data" 
+
+def test_youtube():
+    tooledchat.init()
+    query = "summarize this video: https://www.youtube.com/watch?v=-qjE8JkIVoQ"
+    messages = tooledchat.start_chat("helpful", query)
+    assert "framework" in messages[-1]["content"], "response should be about Lynx"
+    

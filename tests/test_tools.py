@@ -49,20 +49,20 @@ async def test_get_tools():
     slack_tools = tools.get_tools("slack.*")
     assert slack_tools, "No slack tools found"
     for tool in slack_tools:
-        assert tool["function"]["name"].startswith("slack_"), f"Non-slack tool in results: {tool}"
+        assert tool["function"]["name"].startswith("slack.slack_"), f"Non-slack tool in results: {tool}"
     
     # Test getting specific tool
     specific_tools = tools.get_tools("slack.slack_post_message")
     if specific_tools:  # Only assert if the tool exists
         assert len(specific_tools) == 1, "Expected exactly one tool"
-        assert specific_tools[0]["function"]["name"] == "slack_post_message", "Expected tool not found"
+        assert specific_tools[0]["function"]["name"] == "slack.slack_post_message", "Expected tool not found"
     
     # Test getting multiple patterns
     multi_pattern_tools = tools.get_tools("slack.*", "youtube.*")
     assert multi_pattern_tools, "No tools found for multiple patterns"
     
     for tool in multi_pattern_tools:
-        assert tool["function"]["name"].startswith(("slack_", "get_transcript")), f"Unexpected tool: {tool}"
+        assert tool["function"]["name"].startswith(("slack.", "youtube.")), f"Unexpected tool: {tool}"
 
 
 @pytest.mark.asyncio

@@ -26,15 +26,15 @@ async def init():
         # The ListToolsResult object contains a 'tools' attribute, not 'items'
         for tool in server_tools.tools:
             prefixed_name = f"{server['name']}.{tool.name}"
-            tools[prefixed_name] = _tool_dict(tool)
+            tools[prefixed_name] = _tool_dict(server['name'], tool)
     
     return tools
 
-def _tool_dict(tool):
+def _tool_dict(server_name, tool):
     return {
         "type": "function",
         "function": {
-            "name": tool.name,
+            "name": f"{server_name}.{tool.name}",
             "description": tool.description,
             "parameters": tool.inputSchema
         }
