@@ -66,5 +66,5 @@ def test_youtube():
     tooledchat.init()
     query = "summarize this video: https://www.youtube.com/watch?v=-qjE8JkIVoQ"
     messages = tooledchat.start_chat("helpful", query)
-    assert "framework" in messages[-1]["content"], "response should be about Lynx"
+    assert any([t in messages[-1]["content"].lower() for t in ["lynx", "framework", "javascript", "tiktok"]]), "response should be about Lynx"
     

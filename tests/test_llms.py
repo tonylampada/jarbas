@@ -49,7 +49,7 @@ def test_chat_with_tools():
     tool_call = response["tool_calls"][0]
     assert "function" in tool_call, "Tool call should have a function"
     assert "name" in tool_call["function"], "Function should have a name"
-    assert tool_call["function"]["name"] == "slack_get_users", f"Tool call should be slack_get_users, got {tool_call['function']['name']}"
+    assert tool_call["function"]["name"] == "slack.slack_get_users", f"Tool call should be slack_get_users, got {tool_call['function']['name']}"
 
 
 def test_chat_with_multiple_turns():
