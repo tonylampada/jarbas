@@ -12,7 +12,6 @@ def setup_configs():
     configs.init()
 
 
-
 def test_chat_basic():
     messages = [{"role": "user", "content": "Hello, what is your name?"}]
     provider, model = configs.get_default_model().split("/")
@@ -74,7 +73,28 @@ def test_chat_with_multiple_turns_using_tools():
     _tools = tools.get_tools("slack.*")
     assert _tools, "Tools were not loaded correctly. Make sure MCP servers are running."
     assert len(_tools) > 0, "No slack tools were found"
-    tool_results = '{"ok":true,"members":[{"id":"USLACKBOT","name":"slackbot","deleted":false,"color":"757575"},{"id":"UL7FURTT5","name":"John","deleted":false,"color":"757575"}],"cache_ts":1741285071,"response_metadata":{"next_cursor":"xxxyyy="}}'
+    tool_results = {
+        "ok": True,
+        "members": [
+            {
+                "id": "USLACKBOT",
+                "name": "slackbot", 
+                "deleted": False,
+                "color": "757575"
+            },
+            {
+                "id": "UL7FURTT5",
+                "name": "John",
+                "deleted": False,
+                "color": "757575"
+            }
+        ],
+        "cache_ts": 1741285071,
+        "response_metadata": {
+            "next_cursor": "xxxyyy="
+        }
+    }
+    
     messages = [
         {
             "role": "system", 
@@ -99,8 +119,8 @@ def test_chat_with_multiple_turns_using_tools():
             }]
         },
         {
-            "role": "user",
-            "content": f"Tool results: {tool_results}"
+            "role": "tool",
+            "content": json.dumps(tool_results)
         }
     ]
     provider, model = configs.get_default_model().split("/")
