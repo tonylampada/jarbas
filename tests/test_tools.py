@@ -75,4 +75,35 @@ async def test_call_tool():
     
     if isinstance(result, dict) and result.get("type") == "error":
         assert "code" in result, "Error response missing code"
-        assert "message" in result, "Error response missing message" 
+        assert "message" in result, "Error response missing message"
+
+
+def test_tool_dict():
+    """Test the _tool_dict function for correct dictionary formatting."""
+    from jarbas.tools import _tool_dict
+    from typing import NamedTuple, Dict, Any
+
+    # Define a mock Tool object
+    class MockTool(NamedTuple):
+        name: str
+        description: str
+        inputSchema: Dict[str, Any]
+
+    # Create a sample tool instance
+    sample_tool = MockTool(
+        name="sample_tool",
+        description="This is a sample tool.",
+        inputSchema={"type": "object", "properties": {"test_param": {"type": "integer"}}}
+    )
+    server_name = "mock_server"
+
+    # Call the _tool_dict function
+    result = _tool_dict(server_name, sample_tool)
+
+    # Assert the structure and content of the returned dictionary
+    assert result["type"] == "function"
+    assert "function" in result
+    function_dict = result["function"]
+    assert function_dict["name"] == f"{server_name}.{sample_tool.name}"
+    assert function_dict["description"] == sample_tool.description
+    assert function_dict["parameters"] == sample_tool.inputSchema
